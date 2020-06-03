@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import jwt
 import json
+from oauth.models import UserProfile
 
 @csrf_exempt
 def login_account(request):
@@ -20,16 +21,28 @@ def login_account(request):
     else:
         return JsonResponse({'message': "invalid username/password"}, status=401)
 
+@csrf_exempt
 def check_account(request):
-    if 'access_token' in request.header:
-        token = request.headers['access_token']
-        data = jwt.decode(token, setting.JWT_SECRET, settings.JWT_ALGORITHM)
-        data_username = data['username']
-        user_data = User.objects.filter(username=username)[0]
+    
+    jwt_token = request.headers.get('authorization', None)
 
-        username = user_data['username']
-        t_open_id = user_data['t_open_id']
-
-        return JsonResponse({'username': username, 't_open_id': t_open_id}, status=200)
+    if jwt_token:
+        try:
+            payload = jwt.decode(jwt_token, settings.JWT_SECRET, settings.JWT_ALGORITHM)
+            print(payload)
+        except (jwt.DecodeError, jwt.ExpiredSignatureError):
+            return JsonResponse({'message': "Invalid Token"}, status=401)
     else:
-        return JsonResponse({'message': "Invalid Token"}, status=401)
+        return JsonResponse({'message': "Not Authorized"}, status=401)
+    return JsonResponse(payload, status=200)
+
+@csrf_exempt
+def create_new_user(request):
+    data = json.loads(request.body)
+    username = data['username']
+    password = data['password']
+    diamonds = data['diamonds']
+    t_open_id = data['t_open_id']
+    UserProfile.objects.create_user(username, password, diamonds, t_open_id)
+
+    return JsonResponse({'message': "User Created"})

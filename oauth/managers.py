@@ -8,11 +8,11 @@ class UserManager(BaseUserManager):
     for authentication instead of usernames.
     """
 
-    def create_user(self, username, password, **extra_fields):
+    def create_user(self, username, password, diamonds, t_open_id, **extra_fields):
         """
         Create and save a User with the given email and password.
         """
-        user = self.model(username=username, **extra_fields)
+        user = self.model(username=username, diamonds=diamonds, t_open_id=t_open_id, **extra_fields)
         user.set_password(password)
         user.save()
         return user
