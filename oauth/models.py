@@ -11,7 +11,7 @@ class UserProfile(AbstractUser):
     is_superuser = None
     last_login = None
     last_name = None
-    t_open_id = models.PositiveIntegerField(primary_key=False, default=0)
+    t_open_id = models.PositiveIntegerField(primary_key=False, default=0, unique=True)
     diamonds =  models.PositiveIntegerField(primary_key=False, default=0)
     
     objects = UserManager()

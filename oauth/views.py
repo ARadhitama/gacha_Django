@@ -14,7 +14,7 @@ def login_account(request):
     user_check = authenticate(request, username=username, password=password)
 
     if user_check is not None:
-        payload = { 'username': user_check.username, 't_open_id': user_check.t_open_id,}
+        payload = { 'username': user_check.username, 't_open_id': user_check.t_open_id}
         jwt_token = jwt.encode(payload, settings.JWT_SECRET, settings.JWT_ALGORITHM)
 
         return JsonResponse({'token': jwt_token.decode('utf-8')}, status=200)
@@ -29,7 +29,6 @@ def check_account(request):
     if jwt_token:
         try:
             payload = jwt.decode(jwt_token, settings.JWT_SECRET, settings.JWT_ALGORITHM)
-            print(payload)
         except (jwt.DecodeError, jwt.ExpiredSignatureError):
             return JsonResponse({'message': "Invalid Token"}, status=401)
     else:
