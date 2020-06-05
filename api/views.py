@@ -17,7 +17,10 @@ def use_diamond(id, amount):
 @csrf_exempt
 def spin_gacha(request):
 
-    jwt_token = request.headers.get('authorization', None)
+    try:
+        jwt_token = request.headers.get('authorization', None)
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
 
     if jwt_token:
         try:
@@ -34,11 +37,12 @@ def spin_gacha(request):
         Gacha_itemlist.append({'item_id': item.item_id, 'item_name': item.item_name})
         Gacha_chance.append(item.chance)
 
-    data = json.loads(request.body)
-    spin_type = data['spin_type']
-    owned_diamonds = UserProfile.objects.values_list('diamonds', flat=True).get(t_open_id=payload['t_open_id'])
-
-    print(owned_diamonds)
+    try:
+        data = json.loads(request.body)
+        spin_type = data['spin_type']
+        owned_diamonds = UserProfile.objects.values_list('diamonds', flat=True).get(t_open_id=payload['t_open_id'])
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
 
     if (spin_type==1):
         roll_cost = 10
@@ -46,30 +50,33 @@ def spin_gacha(request):
         roll_cost = 90
 
     if 'spin_type' in data:
-        print("1")
         if (spin_type==1) or (spin_type==10):
             if (owned_diamonds>=roll_cost):
 
-                use_diamond(payload['t_open_id'], roll_cost)
-
-                item_roll = random.choices(Gacha_itemlist, Gacha_chance, k=spin_type)
-
+                try:
+                    use_diamond(payload['t_open_id'], roll_cost)
+                    item_roll = random.choices(Gacha_itemlist, Gacha_chance, k=spin_type)
+                except Exception as e:
+                    return JsonResponse({'message': str(e)})
 
                 for item in item_roll:
                     itemSpinHistory.objects.create(item_id=item['item_id'], item_name=item['item_name'], spin_type=spin_type, t_open_id=payload['t_open_id'])
 
             else:
-                JsonResponse({'message': "Not enough diamond"}, status-403)
+                return JsonResponse({'message': "Not enough diamond"}, status=400)
         else:
-            JsonResponse({'message': "Invalid spin type"}, status=503)
+            return JsonResponse({'message': "Invalid spin type"}, status=400)
     else:
-        JsonResponse({'message': "Invalid request body"}, status=403)
+        return JsonResponse({'message': "Invalid request body"}, status=400)
 
     return JsonResponse({'result': item_roll}, status=200)
 
 def spin_history(request):
 
-    jwt_token = request.headers.get('authorization', None)
+    try:
+        jwt_token = request.headers.get('authorization', None)
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
 
     if jwt_token:
         try:
@@ -81,6 +88,7 @@ def spin_history(request):
 
     gacha_history = []
     item = itemSpinHistory.objects.filter(t_open_id=payload['t_open_id']).order_by('-created_at')
+
     for gacha_item in item:
         gacha_history.append({'item_id': gacha_item.item_id, 'item_name': gacha_item.item_name, 'created_at': gacha_item.created_at, 'spin_type': gacha_item.spin_type})
     

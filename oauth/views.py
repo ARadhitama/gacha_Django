@@ -8,9 +8,13 @@ from oauth.models import UserProfile
 
 @csrf_exempt
 def login_account(request):
-    data = json.loads(request.body)
-    username = data['username']
-    password = data['password']
+    try:
+        data = json.loads(request.body)
+        username = data['username']
+        password = data['password']
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
+
     user_check = authenticate(request, username=username, password=password)
 
     if user_check is not None:
@@ -23,8 +27,10 @@ def login_account(request):
 
 @csrf_exempt
 def check_account(request):
-    
-    jwt_token = request.headers.get('authorization', None)
+    try:
+        jwt_token = request.headers.get('authorization', None)
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
 
     if jwt_token:
         try:
@@ -37,11 +43,14 @@ def check_account(request):
 
 @csrf_exempt
 def create_new_user(request):
-    data = json.loads(request.body)
-    username = data['username']
-    password = data['password']
-    diamonds = data['diamonds']
-    t_open_id = data['t_open_id']
-    UserProfile.objects.create_user(username, password, diamonds, t_open_id)
+    try:
+        data = json.loads(request.body)
+        username = data['username']
+        password = data['password']
+        diamonds = data['diamonds']
+        t_open_id = data['t_open_id']
+        UserProfile.objects.create_user(username, password, diamonds, t_open_id)
+    except Exception as e:
+        return JsonResponse({'message': str(e)})
 
     return JsonResponse({'message': "User Created"})
